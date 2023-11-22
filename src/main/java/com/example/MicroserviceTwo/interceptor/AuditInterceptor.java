@@ -21,6 +21,7 @@ import java.io.StringWriter;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -95,7 +96,7 @@ public class AuditInterceptor implements HandlerInterceptor {
         serviceTwoEntity.setRequestMethod(request.getMethod());
         serviceTwoEntity.setRequestHeaderName(getRequestHeaderNames(request));
         serviceTwoEntity.setContentType(request.getContentType());
-        serviceTwoEntity.setRequestID(request.getRequestId()); //
+        serviceTwoEntity.setRequestID(generateRequestId());
         serviceTwoEntity.setHostName(request.getServerName());
         serviceTwoEntity.setResponse(responseContent);
         serviceTwoEntity.setErrorTrace(errorStackTrace);
@@ -131,6 +132,29 @@ public class AuditInterceptor implements HandlerInterceptor {
     }
 
 
+
+    //For Alpha-numeric Request Id
+    public static String generateRequestId() {
+        UUID uuid = UUID.randomUUID();
+        String string = uuid.toString().replaceAll("-", ""); // Remove hyphens
+        String alphanumericCharacters = string.replaceAll("[^A-Za-z0-9]", ""); // Remove non-alphanumeric characters
+//        int randomIndex = (int) (Math.random() * alphanumericCharacters.length());
+
+        while (alphanumericCharacters.length() < 10) {
+            alphanumericCharacters += generateRandomAlphanumeric();
+        }
+
+        return alphanumericCharacters.substring(0, 10);
     }
+
+    private static String generateRandomAlphanumeric() {
+        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        int randomIndex = (int) (Math.random() * characters.length());
+        return characters.substring(randomIndex, randomIndex + 1);
+    }
+
+
+
+}
 
 

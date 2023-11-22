@@ -17,9 +17,9 @@ public class ServiceTwoController {
     }
 
 
-    @GetMapping("/save")
+    @GetMapping("/service-2")
     public String getPost(){
-        return "Microservice Two running successfully";
+        return "Microservice 2 running successfully";
     }
 //    public Mono<String> getMessage () {
 //            // Simulate processing to retrieve a message (replace this with your actual logic)
