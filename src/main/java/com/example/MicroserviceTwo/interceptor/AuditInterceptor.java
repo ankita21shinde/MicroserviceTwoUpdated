@@ -9,7 +9,10 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -19,6 +22,7 @@ import org.springframework.web.util.ContentCachingResponseWrapper;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.UUID;
@@ -87,6 +91,19 @@ public class AuditInterceptor implements HandlerInterceptor {
         String responseContent = getResponse(wrapper);
 
 
+        //To get Query parameter
+        String name = request.getParameter("name");
+        if (name == null || name.isEmpty()) {
+            throw new IllegalArgumentException("Query parameter 'queryParameter' is required.");
+        }
+//        ServiceOneEntity serviceOneEntity = new ServiceOneEntity();
+        serviceTwoEntity.setQueryParameter(name);
+        serviceTwoEntity.setAuditTime(LocalDateTime.now());
+        serviceRepo.save(serviceTwoEntity);
+
+
+
+
         //for storing into database
         serviceTwoEntity.setRequestTime(dateFormat.format(requestTime));
         serviceTwoEntity.setResponseTime(dateFormat.format(responseTime));
@@ -104,6 +121,8 @@ public class AuditInterceptor implements HandlerInterceptor {
       serviceRepo.save(serviceTwoEntity);
 
 
+
+
         WebClient webClient = WebClient.create();
         webClient.post()
                 .uri("http://localhost:8083/api/data")
@@ -114,6 +133,9 @@ public class AuditInterceptor implements HandlerInterceptor {
 
 
     }
+
+
+
 
     private String getRequestHeaderNames(HttpServletRequest request) {
         Enumeration<String> headerNames = request.getHeaderNames();
