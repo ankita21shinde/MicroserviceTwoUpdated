@@ -4,10 +4,7 @@ package com.example.MicroserviceTwo.controller;
 import com.example.MicroserviceTwo.entity.ServiceTwoEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
 @RestController
@@ -22,7 +19,7 @@ public class ServiceTwoController {
 
 
     @PostMapping("/create-service2")
-    public ResponseEntity<String> create(@RequestParam(required = false)String name) {
+    public ResponseEntity<String> create(@RequestHeader("client-id") String clientId, @RequestParam(required = false)String name) {
         if (name == null || name.isEmpty()) {
             throw new IllegalArgumentException("Query parameter 'queryParameter' is required.");
         }

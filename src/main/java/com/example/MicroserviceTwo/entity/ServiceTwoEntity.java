@@ -16,11 +16,14 @@ public class ServiceTwoEntity {
 
     private String queryParameter;
     private LocalDateTime auditTime;
-
+    private String clientId;
 
     @Id
     @GeneratedValue(strategy = GenerationType.SEQUENCE)
     private long id;
+
+
+
 
     private String serviceName="Microservice 2";
 

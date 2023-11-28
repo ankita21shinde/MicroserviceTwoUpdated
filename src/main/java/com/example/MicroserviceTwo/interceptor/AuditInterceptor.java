@@ -4,15 +4,13 @@ package com.example.MicroserviceTwo.interceptor;
 
 import com.example.MicroserviceTwo.entity.ServiceTwoEntity;
 import com.example.MicroserviceTwo.repo.ServiceRepo;
+import com.example.MicroserviceTwo.service.ServiceTwoServiceImpl;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -35,6 +33,9 @@ public class AuditInterceptor implements HandlerInterceptor {
     @Autowired
     private ServiceRepo serviceRepo;
 
+    @Autowired
+            private ServiceTwoServiceImpl serviceTwoServiceImpl;
+
 
     Date requestTime = new Date(); // Capture the current date and time
 
@@ -49,9 +50,8 @@ public class AuditInterceptor implements HandlerInterceptor {
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         System.out.println("Request Time: " + dateFormat.format(requestTime));
         request.setAttribute("startTime", startTime);
+
         return true;
-
-
     }
 
     @Override
@@ -69,6 +69,12 @@ public class AuditInterceptor implements HandlerInterceptor {
         Date responseTime = new Date(); // Capture the current date and time for response
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 
+        // Get client ID from the header
+        String clientId = request.getHeader("client-id");
+        // Check if client ID is missing
+        if (clientId == null || clientId.isEmpty()) {
+            throw new IllegalArgumentException("Client ID is required in the request header");
+        }
 
         //for error trace
         String errorStackTrace = null;
@@ -105,6 +111,7 @@ public class AuditInterceptor implements HandlerInterceptor {
 
 
         //for storing into database
+        serviceTwoEntity.setClientId(clientId);
         serviceTwoEntity.setRequestTime(dateFormat.format(requestTime));
         serviceTwoEntity.setResponseTime(dateFormat.format(responseTime));
         serviceTwoEntity.setStatusCode(response.getStatus());
@@ -174,6 +181,7 @@ public class AuditInterceptor implements HandlerInterceptor {
         int randomIndex = (int) (Math.random() * characters.length());
         return characters.substring(randomIndex, randomIndex + 1);
     }
+
 
 
 
