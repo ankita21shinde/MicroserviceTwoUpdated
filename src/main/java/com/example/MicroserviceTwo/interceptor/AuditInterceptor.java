@@ -1,7 +1,4 @@
 package com.example.MicroserviceTwo.interceptor;
-
-
-
 import com.example.MicroserviceTwo.entity.ServiceTwoEntity;
 import com.example.MicroserviceTwo.repo.ServiceRepo;
 import com.example.MicroserviceTwo.service.ServiceTwoServiceImpl;
@@ -10,6 +7,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -29,16 +29,16 @@ import java.util.UUID;
 @Slf4j
 public class AuditInterceptor implements HandlerInterceptor {
     private WebClient.Builder builder;
-
     @Autowired
     private ServiceRepo serviceRepo;
-
     @Autowired
-            private ServiceTwoServiceImpl serviceTwoServiceImpl;
+    private ServiceTwoServiceImpl serviceTwoServiceImpl;
 
-
+    //To add multithreading bean from config package
+//    @Autowired
+//    @Qualifier("asyncExecutor")
+//    private ThreadPoolTaskExecutor asyncExecutor;
     Date requestTime = new Date(); // Capture the current date and time
-
     private long startTime;
 
 
@@ -59,6 +59,7 @@ public class AuditInterceptor implements HandlerInterceptor {
         System.out.println("Post Handler method");
     }
 
+//    @Async("asyncExecutor")
     @Override
     public void afterCompletion(HttpServletRequest request, HttpServletResponse response, Object handler, Exception ex) throws Exception {
 
@@ -98,15 +99,8 @@ public class AuditInterceptor implements HandlerInterceptor {
 
 
         //To get Query parameter
-        String name = request.getParameter("name");
-        if (name == null || name.isEmpty()) {
-            throw new IllegalArgumentException("Query parameter 'queryParameter' is required.");
-        }
-//        ServiceOneEntity serviceOneEntity = new ServiceOneEntity();
-        serviceTwoEntity.setQueryParameter(name);
-        serviceTwoEntity.setAuditTime(LocalDateTime.now());
-        serviceRepo.save(serviceTwoEntity);
-
+//        String name = request.getParameter("name");
+        //ServiceOneEntity serviceOneEntity = new ServiceOneEntity();
 
 
 
@@ -124,26 +118,21 @@ public class AuditInterceptor implements HandlerInterceptor {
         serviceTwoEntity.setHostName(request.getServerName());
         serviceTwoEntity.setResponse(responseContent);
         serviceTwoEntity.setErrorTrace(errorStackTrace);
-
-      serviceRepo.save(serviceTwoEntity);
-
-
+        serviceTwoEntity.setQueryParameter(request.getQueryString());
+        serviceTwoEntity.setAuditTime(LocalDateTime.now());
 
 
-        WebClient webClient = WebClient.create();
+        serviceRepo.save(serviceTwoEntity);
+
+    //web client
+      WebClient webClient = WebClient.create();
         webClient.post()
                 .uri("http://localhost:8083/api/data")
                 .body(BodyInserters.fromValue(serviceTwoEntity))
                 .retrieve()
                 .bodyToMono(String.class)
                 .block();
-
-
     }
-
-
-
-
     private String getRequestHeaderNames(HttpServletRequest request) {
         Enumeration<String> headerNames = request.getHeaderNames();
         StringBuilder headerNamesStr = new StringBuilder();
@@ -153,14 +142,10 @@ public class AuditInterceptor implements HandlerInterceptor {
         }
         return headerNamesStr.toString();
     }
-
     private String getResponse(ContentCachingResponseWrapper contentCachingResponseWrapper) {
-
         String response = IOUtils.toString(contentCachingResponseWrapper.getContentAsByteArray(), contentCachingResponseWrapper.getCharacterEncoding());
         return response;
     }
-
-
 
     //For Alpha-numeric Request Id
     public static String generateRequestId() {
@@ -168,23 +153,16 @@ public class AuditInterceptor implements HandlerInterceptor {
         String string = uuid.toString().replaceAll("-", ""); // Remove hyphens
         String alphanumericCharacters = string.replaceAll("[^A-Za-z0-9]", ""); // Remove non-alphanumeric characters
 //        int randomIndex = (int) (Math.random() * alphanumericCharacters.length());
-
         while (alphanumericCharacters.length() < 10) {
             alphanumericCharacters += generateRandomAlphanumeric();
         }
-
         return alphanumericCharacters.substring(0, 10);
     }
-
     private static String generateRandomAlphanumeric() {
         String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
         int randomIndex = (int) (Math.random() * characters.length());
         return characters.substring(randomIndex, randomIndex + 1);
     }
-
-
-
-
 }
 
 
